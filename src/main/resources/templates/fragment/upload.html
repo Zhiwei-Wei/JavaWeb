@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+
+<html lang="zh-CN" xmlns:th="http://www.thymeleaf.org">
+
+<head>
+
+<meta charset="UTF-8">
+
+<title>由html5实现的文件上传预览功能</title>
+    <link rel="stylesheet" th:href="@{/css/zyUpload.css}" type="text/css">
+</head>
+
+<body>
+<div th:fragment="upload" id="upload_img_wrapper" class="aaa" style="display: none;">
+    <div id="demo" class="demo"></div>
+    <!--<script th:src="@{/js/jquery-3.3.1.min.js}"></script>-->
+    <!--<script th:src="@{/js/zyFile.js}"></script>-->
+    <!--<script th:src="@{/js/zyUpload.js}"></script>-->
+    <!--<script th:src="@{/js/jq22.js}"></script>-->
+</div>
+<button onclick="f()">改变</button>
+<script>
+    function f() {
+        $('#upload_img_wrapper').attr('class','bbb');
+    }
+</script>
+</body>
+
+</html>

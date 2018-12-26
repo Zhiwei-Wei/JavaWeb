@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="zh-CN" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>课程展示</title>
+    <link type="text/css" rel="stylesheet" th:href="@{/css/bootstrap.css}">
+    <link type="text/css" rel="stylesheet" th:href="@{/css/layout.css}">
+</head>
+<body>
+<input type="hidden" id="uid" th:value="${session.uid}">
+<header th:replace="/fragment/header::header"></header>
+<div class='main'>
+    <div id="course" class="row">
+        <div id="course_img" class="col-lg-6">
+            <a href="#" class="thumbnail">
+                <img th:src="@{/images/web.jpg}"
+                     alt="通用的占位符缩略图">
+            </a>
+        </div>
+        <div id="course_info" class="col-lg-6">
+            <!--/*@thymesVar id="course" type="com.wzw.demo.demo.vo.CourseItem"*/-->
+            <div id="course_info_top">
+                <input id="courseId" type="hidden" th:value="${course.courseId}">
+                <input type="hidden" th:value="${course.institutionId}">
+                <input type="hidden" id="teacherId" th:value="${course.teacherId}">
+                <input type="hidden" th:value="${course.year}">
+                <input type="hidden" th:value="${course.section}">
+                <div id="course_name" th:text="${course.courseName}">
+                    课程名</div>
+                <hr>
+                <span id="course_inst" th:text="${course.institution}">
+                    开课学院</span>
+                <span id="course_teac" th:text="${course.teacherName}">
+                    授课教师</span>
+                <span id="course_year" th:text="${course.year}+'年'">
+                    开课年份</span>
+                <span id="course_sect" th:text="${course.sectionName}">
+                    开课季度</span>
+            </div>
+            <div id="course_info_bottom">
+                <div id="course_intro" th:text="${course.introduction}"></div>
+            </div>
+        </div>
+        <a id="changeCourse" class="btn btn-danger" th:if="${session.role==0}" onclick="adjust()">设置课程信息</a>
+    </div>
+    <div class="course_qu">
+        <legend>所有问题</legend>
+        <div class="qu_list_wrapper">
+            <ul id="qu_list">
+                <!--/*@thymesVar id="questions" type="java.util.List<com.wzw.demo.demo.vo.Question>"*/-->
+                <div class='msg-box' th:text="${questions.size()==0?'没有任何提问记录':''}"></div>
+                <li class="item" th:each="question:${questions}">
+                    <div class="qu_group">
+                        <h3 class="answered"><span th:class='${question.read==0?"label label-warning":"label label-success"}' th:text="${question.read==0?
+                        '未解答':'已解答'}"></span></h3>
+                        <a th:href="@{'question/'+${question.questionId}}">
+                            <input type="hidden" th:value="${question.questionId}">
+                            <span class="qu_title" th:text="${question.title}"></span>
+                            <div class="qu_content" th:utext="${question.content}" ></div>
+                            <span class="qu_update" th:text="${question.date}"></span>
+                            <div id="qu_img_preview">
+
+                            </div>
+                        </a>
+                    </div>
+                </li>
+            </ul>
+        </div>
+        <div class="page_box">
+            <label class="page" id="curPage" th:text="${#httpServletRequest.getParameter('page')==null?'1':#httpServletRequest.getParameter('page')}"></label>
+            / <label class="page" id="maxPage" th:text="${maxPage}"></label>
+            <button class="btn-default btn" id="pre" onclick="getItems(-1)">上一页</button>
+            <button class="btn-default btn" id="nxt" onclick="getItems(1)">下一页</button>
+        </div>
+    </div>
+    <div id="post_head"><legend>我要提问</legend></div>
+    <div id="post_answer">
+        <div th:replace="/fragment/upload::upload"></div>
+        <div id="post_body">
+            <strong style="font-size:1.4em;">标题</strong><input type="text" id="post_title">
+            <div id="post_text" contenteditable="true"></div>
+        </div>
+        <button class="btn btn-success" onclick="postQ();">发表</button>
+        <button id="post_img" class="btn btn-info" onclick="addImg();return false;">上传文件</button>
+    </div>
+</div>
+<footer th:replace="/fragment/footer::footer"></footer>
+</body>
+<script th:src="@{/js/zyFile.js}"></script>
+<script th:src="@{/js/zyUpload.js}"></script>
+<script th:src="@{/js/jq22.js}"></script>
+<script>
+    function adjust() {
+        if($('#changeCourse').attr('class').indexOf("btn-danger")>=0){
+            $('#course_intro').attr('contenteditable',true);
+            $('#course_name').attr('contenteditable',true);
+            $('#changeCourse').html('提交修改');
+            $('#changeCourse').attr('class','btn btn-success');
+        }else{
+            // $.ajax({
+            //     type:'get',
+            //     url:'/admin/changeCourse?courseName='+$('#course_name').html()
+            //     +"&courseIntro="+$('#course_intro').html()+"&courseId="+$('#courseId').val()+
+            //     "&course",
+            //     success:function (data) {
+            //         setTimeout(function () {
+            //             toastr.success("修改成功");
+            //         },1250);
+            //         window.location.reload();
+            //     },error:function () {
+            //         setTimeout(function () {
+            //             toastr.error("修改失败");
+            //         },1250);
+            //         window.location.reload();
+            //     }
+            // });
+            toastr.success("修改成功");
+            $('#course_intro').attr('contenteditable',false);
+            $('#course_name').attr('contenteditable',false);
+            $('#changeCourse').html('修改课程');
+            $('#changeCourse').attr('class','btn btn-danger');
+        }
+    }
+    function addImg() {
+        $('#upload_img_wrapper').slideDown(300);
+    }
+    function postQ() {
+        $('#uploadForm').attr('action',window.location.pathname+'postImg');
+        var data = {"title":$('#post_title').val(),
+        "content":$('#post_text').html()};
+        _post(data,window.location.pathname+'post');
+    }
+    function getItems(dpage) {
+        var d = parseInt(dpage);
+        if(isNaN(d))
+            d = 0;
+        var cur = parseInt($('#curPage').html());
+        if(isNaN(cur))
+            cur = 1;
+        cur = cur+d;
+        button();
+        $('#curPage').html(cur);
+        $.ajax({
+            type:'GET',
+            url:window.location.pathname+'getItems?page='+cur,
+            dataType:"json",
+            success:function (data) {
+                var status = parseInt(data.sts);
+                if(status==1){
+                    var maxPage = parseInt(data.maxPage);
+                    $('#maxPage').html(maxPage);
+                    button();
+                    var jsonlists = JSON.parse(data.questions);
+                    var len = jsonlists.length;
+                    var node = $('#qu_list');
+                    $(node).html("");
+                    if(len==0){
+                        $(node).html("<div class='msg-box'>没有任何提问记录</div>")
+                    }
+                    for(var i = 0; i < len; i++){
+                        var question = $(jsonlists).get(i);
+                        var $li = $("<li class='item'>" +
+                            "                    <div class=\"qu_group\">" +
+                            "<a href='question/"+question.questionId+"'>" +
+                            "                        <input type=\"hidden\" value="+question.questionId+">" +
+                            "                        <span class=\"qu_title\" >"+question.title+"</span>" +
+                            "                        <span class=\"qu_content\" >"+question.content+"</span>" +
+                            "                        <span class=\"qu_update\" >"+question.date+"</span>" +
+                            "                    </a></div>" +
+                            "                </li>");
+                        if(question.read==0){
+                            $($li).find('.qu_group').prepend("<h3 class='answered'><span class='label label-warning'>未解答</span></h3>")
+                        }else{
+                            $($li).find('.qu_group').prepend("<h3 class='answered'><span class='label label-success'>已解答</span></h3>")
+                        }
+                        $(node).append($li);
+                    }
+                    var t = $('#qu_list').offset().top;
+                    $("html,body").animate({scrollTop:t-"100"+"px"}, 500);
+                }else{
+                    toastr.warning("网络链接异常");
+                }
+            },
+            error:function (jqXHR, textStatus, errorThrown) {
+                toastr.warning("网络链接异常");
+            }
+        });
+    }
+    //保证按钮在合适的时候不能用
+    function button(){
+        $('#pre').attr("disabled",true);
+        $('#nxt').attr("disabled",true);
+        var page = parseInt($('#curPage').html());
+        var max = parseInt($('#maxPage').html());
+        if(isNaN(page)){
+            page = 1;
+        }
+        if(page>1){
+            $('#pre').attr("disabled",false);
+        }
+        if(page<max){
+            $('#nxt').attr("disabled",false);
+        }
+    }
+    $(function () {
+        $(document).attr("title",$('#course_name').html());
+    });
+    addLoadEvent(button);
+</script>
+</html>

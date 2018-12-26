@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="zh-CN" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>注册</title>
+    <link type="text/css" rel="stylesheet" th:href="@{/css/bootstrap.css}">
+    <link type="text/css" rel="stylesheet" th:href="@{/css/layout.css}">
+</head>
+<body>
+<header th:replace="/fragment/header::header"></header>
+<div class="main">
+    <div class="reg_left">
+        注册用广告
+    </div>
+    <div class="reg_box">
+        <form class="reg_group" th:action="@{/register}" method="post">
+            <div class="form_group">
+                <input type="text" id="reg_user" name="username" placeholder="用户名" oninput="checkUserName(this)">
+                <span class="tip" id="name_tip">
+                    <span class="tip_success"></span>
+                    <span class="tip_error"></span>
+                    <input type="hidden" class="reg_check" value="0">
+                </span>
+            </div>
+            <div class="form_group">
+                <input type="password" id="reg_pass" name="password" placeholder="密码" oninput="checkPass(this)">
+                <span class="tip" id="pass_tip">
+                    <span class="tip_success"></span>
+                    <span class="tip_error"></span>
+                    <input type="hidden" class="reg_check" value="0">
+                </span>
+            </div>
+            <div class="form_group">
+                <input type="password" id="again" placeholder="重复密码" oninput="checkAgain(this)">
+                <span class="tip" id="again_tip">
+                    <span class="tip_success"></span>
+                    <span class="tip_error"></span>
+                    <input type="hidden" class="reg_check" value="0">
+                </span>
+            </div>
+            <div class="form_group">
+                <input type="submit" value="注册" onclick="return check();">
+            </div>
+        </form>
+    </div>
+</div>
+<footer th:replace="/fragment/footer::footer"></footer>
+</body>
+<script>
+    function checkAgain(node) {
+        $('#again_tip').find('.tip_success').html("");
+        $('#again_tip').find('.tip_error').html("");
+        var again = $(node).val();
+        var pass = $('#reg_pass').val();
+        if(again!=pass){
+            $('#again_tip').find('.tip_error').html("两次密码不一致");
+        }else{
+            $('#again_tip').find('.tip_success').html("√");
+            $('#again_tip').find('.reg_check').val(1);
+        }
+    }
+    function check(){
+        $('form').submit(function() {
+            var nodes = $('.reg_box').find('.reg_check');
+            var f = 1;
+            $.each(nodes, function (i,obj) {
+                if(parseInt($(obj).val())==0){
+                    f=0;
+                }
+            });
+            if(f==0)
+                return false;
+            else
+                return true;
+        });
+    }
+    function checkPass(node){
+        $('#pass_tip').find('.tip_success').html("");
+        $('#pass_tip').find('.tip_error').html("");
+        var pass = $(node).val();
+        if(pass.length < 6 || pass.length>18){
+            $('#pass_tip').find('.tip_error').html("密码长度为6-18位");
+            return;
+        }
+        var ls = 0;
+        if(pass.match(/([a-z])+/)){
+            ls++;
+        }
+        if(pass.match(/([0-9])+/)){
+            ls++;
+        }
+        if(pass.match(/([A-Z])+/)){
+            ls++;
+        }
+        if(pass.match(/[^a-zA-Z0-9]+/)){
+            ls++;
+        }
+        if(ls<3){
+            $('#pass_tip').find('.tip_error').html("密码需要有数字，大、小写字母组成");
+        }else{
+            $('#pass_tip').find('.tip_success').html("√");
+            $('#pass_tip').find('.reg_check').val(1);
+        }
+    }
+    function checkUserName(node) {
+        $('#name_tip').find('.tip_success').html("");
+        $('#name_tip').find('.tip_error').html("");
+        $('#name_tip').find('.reg_check').val(0);
+        var regEn = /[`~!@#$%^&*()_+<>?:"{},.\/; '[\]]/im,
+            regCn = /[·！#￥（——）： ；“”‘、，|《。》？、【】[\]]/im;
+        $(node).val($(node).val().replace(regEn,''));//禁止特殊字符
+        $(node).val($(node).val().replace(regCn,''));//禁止特殊字符
+        var val = $(node).val();
+        if(val.length<8 || val.length>18){
+            $('#name_tip').find('.tip_error').html("用户名长度为8到18位");
+            return;
+        }
+        var data={"userName":val};
+        $.ajax({
+            type:'POST',
+            url:'/checkUserName',
+            data:JSON.stringify(data),
+            dataType:"json",
+            contentType: "application/json;charset=utf-8",
+            success:function (data) {
+                var status = parseInt(data.sts);
+                if(status==1){
+                    $('#name_tip').find('.tip_success').html("√");
+                    $('#name_tip').find('.reg_check').val(1);
+                }else{
+                    $('#name_tip').find('.tip_error').html(data.msg);
+                }
+            },
+            error:function (jqXHR, textStatus, errorThrown) {
+
+            }
+        });
+    }
+</script>
+</html>

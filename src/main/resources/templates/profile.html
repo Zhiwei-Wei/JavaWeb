@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="zh-CN" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>我的设置</title>
+    <link type="text/css" rel="stylesheet" th:href="@{/css/bootstrap.css}">
+    <link type="text/css" rel="stylesheet" th:href="@{/css/layout.css}">
+</head>
+<body>
+<header th:replace="/fragment/header::header"></header>
+<div class="main">
+
+    <div class='container'>
+        <div class="row">
+        <div class="col-xs-3">
+            <ul class="nav nav-pills nav-stacked" role="tablist">
+                <li class="active" role="presentation">
+                    <a href="#myInfo" data-toggle="tab">
+                        个人信息设置
+                    </a>
+                </li>
+                <li role="presentation">
+                    <!--在对应板块向老师提问的-->
+                    <a href="#account" data-toggle="tab">账号设置</a>
+                </li>
+            </ul>
+        </div>
+        <div class="col-md-9">
+            <div id="settings" class="tab-content">
+                <div class="tab-pane fade in active" id="myInfo">
+                    <!--/*@thymesVar id="info" type="com.wzw.demo.demo.vo.UserInfo"*/-->
+                    <form id="selfInfo" class="form-horizontal" role="form" th:action="@{/filter/profile/submitInfo}"
+                      method="post">
+                        <div id="legend" class="">
+                            <legend class="">个人信息设置</legend>
+                        </div>
+                        <div class="col-lg-6">
+                            <!-- Text input-->
+                            <label class="control-label" for="realname">真实姓名</label>
+                            <div class="input-group">
+                                <input id="realname" type="text" name="realName"
+                                        th:value="${info.realName}" placeholder="Real Name" class="form-control">
+                                <p class="help-block"></p>
+                            </div>
+                        </div>
+                        <div class="col-lg-6">
+                            <!-- Text input-->
+                            <label class="control-label" for="nickname">用户昵称</label>
+                            <div class="input-group">
+                                <input th:value="${info.nickName}" type="hidden" id="org_nickname">
+                                <input oninput="checkNickName(this)" id="nickname" type="text" name="nickName" placeholder="Nick Name"
+                                       th:value="${info.nickName}" class="form-control"
+                                       data-content="用户昵称重复！"  data-placement="top">
+                                <input id="cheknk" type="hidden" value="1">
+                                <p class="help-block"></p>
+                            </div>
+                        </div>
+                        <div class="col-lg-6">
+                        <!-- Text input-->
+                            <label class="control-label" for="school">你的学校</label>
+                            <div class="input-group">
+                                <input id="school" type="text"
+                                       th:value="${info.school}" name="school" placeholder="Your School" class="form-control">
+                                <p class="help-block"></p>
+                            </div>
+                        </div>
+                        <div class="col-lg-6">
+                            <!-- Select Basic -->
+                            <label class="control-label" for="institution">所在学院</label>
+                            <div class="input-group">
+                                <input type="hidden" th:value="${info.instId}">
+                                <select class="form-control show-tick selectpicker" id="institution" name="instId">
+                                    <option value="0">保密</option>
+                                    <!--/*@thymesVar id="institution" type="java.util.List<com.wzw.demo.demo.vo.Institution>"*/-->
+                                    <option th:each="inst:${institution}"
+                                            th:value="${inst.institutionId}"
+                                            th:text="${inst.name}"
+                                            th:selected="${inst.institutionId==info.instId?'selected':'false'}"></option>
+                                </select>
+                                <p class="help-block"></p>
+                            </div>
+                        </div>
+                        <div class="col-lg-12">
+                            <label class="control-label"></label>
+                            <!-- Button -->
+                            <div class="controls">
+                                <button class="btn btn-info" id="saveInfo" type="submit">保存所有</button>
+                            </div>
+                        </div>
+                    </form>
+
+                </div>
+                <div class="tab-pane fade" id="account">
+
+                    <form id="changePass" class="form-horizontal" role="form" th:action="@{/filter/profile/submitPass}"
+                          method="post">
+                        <div class="">
+                            <legend class="">更改密码</legend>
+                        </div>
+                        <div class="col-lg-12">
+                            <!-- Text input-->
+                            <label class="control-label" for="oldPass">旧密码</label>
+                            <div class="input-group">
+                                <input oninput="ckps()" id="oldPass" type="password" placeholder="Old Password" class="form-control">
+                                <p class="help-block"></p>
+                                <input type="hidden" id="oldPasschek" value="0">
+                            </div>
+                        </div>
+                        <div class="col-lg-12">
+                            <!-- Text input-->
+                            <label class="control-label" for="newPass">新密码</label>
+                            <div class="input-group">
+                                <input oninput="checkPassS(this)" name="newPassword" id="newPass" type="password" placeholder="New Password" class="form-control">
+                                <p class="help-block"></p>
+                            </div>
+                        </div>
+                        <div class="col-lg-12">
+                            <!-- Text input-->
+                            <label class="control-label" for="confirmPass">确认新密码</label>
+                            <div class="input-group">
+                                <input oninput="checkAgainS(this)" id="confirmPass" type="password" placeholder="Confirm Password" class="form-control">
+                                <p class="help-block"></p>
+                            </div>
+                        </div>
+                        <div class="col-lg-12">
+                            <label class="control-label"></label>
+                            <!-- Button -->
+                            <div class="controls">
+                                <button class="btn btn-info" id="savePass">更改密码</button>
+                            </div>
+                        </div>
+                    </form>
+
+                </div>
+            </div>
+        </div>
+    </div>
+    </div>
+</div>
+<footer th:replace="/fragment/footer::footer"></footer>
+</body>
+<script>
+    $('#changePass').submit(function () {
+        var f = 0;
+        if (checkPassS($('#newPass')) && checkAgainS($('#confirmPass')) && checkOldPass()){
+            f = 1;
+            // toastr.success('修改成功，请重新登录');
+        }
+        else{
+            toastr.error('密码错误！');
+        }
+        return f==1;
+    });
+    function ckps() {
+        var val = $('#oldPass').val();
+        $.ajax({
+            type:'post',
+            contentType: 'application/json; charset=UTF-8',
+            url:'/filter/profile/ckPs',
+            dataType:"json",
+            data:val,
+            success:function (data) {
+                console.info(data);
+                console.log("type:"+typeof data);
+                $('#oldPasschek').val(parseInt(data.sts));
+            }
+        })
+    }
+    function checkOldPass() {
+        var val = $('#oldPasschek').val();
+        return parseInt(val)==1;
+    }
+    function checkAgainS(node) {
+        var tip = $(node).parent().find('.help-block');
+        $(tip).html("");
+        var again = $(node).val();
+        var pass = $('#newPass').val();
+        if(again!=pass){
+            $(tip).html("两次密码不一致");
+            return false;
+        }else
+            return true;
+    }
+    function checkForm() {
+        if(parseInt($('#nickname').next().val())==1)
+            return true;
+        else
+            return false;
+    }
+    function checkPassS(node){
+        var tip = $(node).parent().find('.help-block');
+        $(tip).html("");
+        var pass = $(node).val();
+        if(pass.length < 6 || pass.length>18){
+            $(tip).html("密码长度为6-18位");
+            return false;
+        }
+        var ls = 0;
+        if(pass.match(/([a-z])+/)){
+            ls++;
+        }
+        if(pass.match(/([0-9])+/)){
+            ls++;
+        }
+        if(pass.match(/([A-Z])+/)){
+            ls++;
+        }
+        if(pass.match(/[^a-zA-Z0-9]+/)){
+            ls++;
+        }
+        if(ls<3){
+            $(tip).html("密码需要有数字，大、小写字母组成");
+            return false;
+        }else{
+            return true;
+        }
+    }
+    $('#selfInfo').submit(function () {
+        var f = 0;
+        if(checkForm())
+            f = 1;
+        if(f==0)
+            toastr.error("用户昵称错误!");
+        return f!=0;
+    });
+    function checkNickName(node) {
+        var val = $(node).val();
+        if(val==$('#org_nickname').val()){
+            $('#cheknk').val(1);
+            $(node).popover('destroy');
+            return true;
+        }
+        $.ajax({
+            type:'get',
+            url:'/filter/profile/checkNickName?nickName='+val,
+            dataType:"json",
+            success:function(data){
+                if(parseInt(data.sts)==1){
+                    $(node).popover('destroy');
+                    $('#cheknk').val(1);
+                }else{
+                    $(node).popover('show');
+                    $('#cheknk').val(0);
+                }
+            },
+            error:function () {
+                alert("失败");
+            }
+        });
+    }
+</script>
+</html>

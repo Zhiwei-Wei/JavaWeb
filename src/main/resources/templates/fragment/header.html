@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="zh-CN" xmlns:th="http://www.thymeleaf.org">
+<body>
+    <header th:fragment="header" class="header bg">
+        <link type="text/css" rel="stylesheet" th:href="@{/css/bootstrap-table.css}">
+        <style type="text/css">
+            .nav-mobile-button {
+                position: relative;
+                float: right;
+                padding: 9px 10px;
+                margin-top: 8px;
+                margin-bottom: 8px;
+                background-color: transparent;
+                background-image: none;
+                border: 1px solid transparent;
+                border-radius: 4px;
+            }
+            .nav-mobile-button .sr-only {
+                position: absolute;
+                width: 1px;
+                height: 1px;
+                padding: 0;
+                margin: -1px;
+                overflow: hidden;
+                clip: rect(0, 0, 0, 0);
+                border: 0;
+            }
+            .nav-mobile-button .icon-bar {
+                display: block;
+                margin-top: 4px;
+                width: 22px;
+                height: 2px;
+                background: #000000;
+                border-radius: 1px;
+            }
+        </style>
+        <nav class="navbar navbar-default  navbar-transparent navbar-fixed-top navbar-inverse" role="navigation">
+            <div class="container">
+                <div class="navbar-header">
+                    <a class="navbar-brand" th:href="@{/}">USST教务处</a>
+                </div>
+                <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
+                    <ul class="nav navbar-nav">
+                        <li><a th:href="@{/}">首页</a></li>
+                        <li><a th:href="@{/filter/search}">课程分类</a></li>
+                        <li><a href="#">新闻</a></li>
+                    </ul>
+                    <form th:if="${session.uid!=null}" id="courseSearch" action="/filter/comment" method="get" class="navbar-form navbar-left" role="search">
+                        <!--<div class="form-group">-->
+                            <!--<input type="text" name="course" oninput="" class="form-control" placeholder="输入课程名"-->
+                                   <!--th:value="${session.course==null?'':session.course}">-->
+                        <!--</div>-->
+                        <button type="submit" class="btn btn-default" title="搜索所有用户留言">Go!</button>
+                    </form>
+                    <ul class="nav navbar-nav navbar-right">
+                        <li th:if="${session.uid==null}"><a data-toggle="modal" data-target="#register" href=""><span class="glyphicon glyphicon-user"></span> 注册</a></li>
+                        <li th:if="${session.uid==null}"><a id="toLogIn" data-toggle="modal" data-target="#login" href=""><span class="glyphicon glyphicon-log-in"></span> 登录</a></li>
+                        <li th:if="${session.uid!=null}"><a class="dropdown-toggle" data-toggle="dropdown" th:href="@{/filter/profile}" th:text="'欢迎您，'+${session.nickname}"></a></li>
+                        <li class="dropdown" th:if="${session.uid!=null}">
+                            <span class="badge" style="float: right;position:relative;transform: translate(-13px,8px) " th:if="${session.news!=null&&session.news!=0}"
+                                  th:text="${session.news}">1</span>
+                            <button class="nav-mobile-button">
+                                <span class="sr-only"></span>
+                                <span class="icon-bar"></span>
+                                <span class="icon-bar"></span>
+                                <span class="icon-bar"></span>
+                            </button>
+                            <ul class="dropdown-menu">
+                                <li th:if="${session.uid!=null}">
+                                    <span th:if="${session.news!=null&&session.news!=0}" class="badge"
+                                          style="float: right;position:relative;
+transform: translate(-58px,8px)" th:text="${session.news}"></span>
+                                    <a th:href="@{/filter/msg}">查看信息</a>
+                                </li>
+                                <li><a th:if="${session.role==2}" th:href="@{/teacher/course}">课程权限</a> </li>
+                                <li><a th:if="${session.role==0}" th:href="@{/admin/register}">设置教师</a> </li>
+                                <li><a th:if="${session.role==0}" th:href="@{/admin/course}">设置课程</a> </li>
+                                <li><a href="http://www.baidu.com" target="_blank" title="百度啊！">联系客服</a></li>
+                                <li th:if="${session.uid!=null}"><a th:href="@{/logout}" style="color: red;">退出</a> </li>
+                            </ul>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </nav>
+        <script th:src="@{/js/jquery-3.3.1.min.js}"></script>
+        <div class="lg_box" th:replace="login::login"></div>
+        <div class="reg_box" th:replace="login::register"></div>
+        <script>
+            $('a').each(function(){
+                var href = $(this).attr('href');
+                console.log(href);
+                if(href.indexOf("/")>=0){
+                    $(this).click(function () {
+                        $.ajax({
+                            type:'GET',
+                            url:href,
+                            success:function (data) {
+                                if(data.length==0)
+                                    $('#toLogIn').click();
+                                else
+                                    window.location.href=href;
+                            },
+                            error:function () {
+                                alert("错误！请联系管理员");
+                            }
+                        });
+                        return false;
+                    });
+                }
+            });
+        </script>
+    </header>
+</body>
+</html>

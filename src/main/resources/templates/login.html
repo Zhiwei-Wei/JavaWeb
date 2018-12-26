@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="zh-CN" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>登录</title>
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <link type="text/css" rel="stylesheet" th:href="@{/css/layout.css}">
+    <script th:src="@{/js/jquery-3.3.1.min.js}"></script>
+    <style>
+        body{
+            background-color: #C7EDCC;
+            font-family: "microsoft yahei";
+            /*min-width: 800px;*/
+        }
+        img{
+            width: 100%;
+            /*height: 462px;*/
+        }
+        .navbar{
+            /*margin-bottom: -10px;*/
+        }
+        #myppt{
+            margin-top: -20px;
+
+        }
+    </style>
+</head>
+<body>
+
+<ul class="nav navbar-nav navbar-right">
+    <li><a data-toggle="modal" data-target="#register" href=""><span class="glyphicon glyphicon-user"></span> 注册</a></li>
+    <li><a data-toggle="modal" data-target="#login" href=""><span class="glyphicon glyphicon-log-in"></span> 登录</a></li>
+</ul>
+<div id="register" class="modal fade" tabindex="-1" th:fragment="register">
+    <!--<link rel="stylesheet" th:href="@{/css/bootstrap.css}">-->
+    <!--<script th:src="@{/js/bootstrap.js}"></script>-->
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-body">
+                <button class="close" data-dismiss="modal">
+                    <span>&times;</span>
+                </button>
+            </div>
+            <div class="modal-title">
+                <h1 class="text-center">注册</h1>
+            </div>
+            <div class="modal-body">
+                <form class="form-group">
+                    <div class="form-group">
+                        <label for="">用户名</label>
+                        <input id="reg_username" class="form-control" type="text" placeholder="8-18位用户名" oninput="checkUserName(this)">
+                        <span class="tip" id="name_tip">
+                    <span class="tip_success"></span>
+                    <span class="tip_error"></span>
+                    <input type="hidden" class="reg_check" value="0">
+                </span>
+                    </div>
+                    <div class="form-group">
+                        <label for="reg_pass">密码</label>
+                        <input class="form-control" type="password" placeholder="6-18位数字/大小写字母" oninput="checkPass(this)" id="reg_pass">
+                        <span class="tip" id="pass_tip">
+                    <span class="tip_success"></span>
+                    <span class="tip_error"></span>
+                    <input type="hidden" class="reg_check" value="0">
+                </span>
+                    </div>
+                    <div class="form-group">
+                        <label>再次输入密码</label>
+                        <input class="form-control" type="password" placeholder="6-18位数字/大小写字母" oninput="checkAgain(this)">
+                        <span class="tip" id="again_tip">
+                    <span class="tip_success"></span>
+                    <span class="tip_error"></span>
+                    <input type="hidden" class="reg_check" value="0">
+                </span>
+                    </div>
+                    <div class="text-right">
+                        <button class="btn btn-primary" id="reg_form">提交</button>
+                        <button class="btn btn-danger" data-dismiss="modal">取消</button>
+                    </div>
+                    <a href="" data-toggle="modal" data-dismiss="modal" data-target="#login">已有账号？点我登录</a>
+                </form>
+            </div>
+        </div>
+    </div>
+    <script>
+        $('#reg_form').click(
+            function(){
+                var nodes = $('#register').find('.reg_check');
+                var f = 1;
+                $.each(nodes, function (i,obj) {
+                    if(parseInt($(obj).val())==0){
+                        f=0;
+                    }
+                });
+                if(f==0)
+                    return false;
+                else{
+                    var data={"userName":$('#reg_username').val(),
+                        "password":$('#reg_pass').val()};
+                    $.ajax({
+                        type:'post',
+                        url:'/register',
+                        data:JSON.stringify(data),
+                        dataType:'json',
+                        contentType:"application/json; charset=utf-8",
+                        success:function(data){
+                            toastr.success("注册成功！");
+                            setTimeout(function () {
+                                window.location.reload();
+                            },1200);
+                        },
+                        error:function(){
+                            toastr.error("注册失败！");
+                        }
+                    });
+                }
+                return false;
+            });
+        function checkAgain(node) {
+            $('#again_tip').find('.tip_success').html("");
+            $('#again_tip').find('.tip_error').html("");
+            var again = $(node).val();
+            var pass = $('#reg_pass').val();
+            if(again!=pass){
+                $('#again_tip').find('.tip_error').html("两次密码不一致");
+            }else{
+                // $('#again_tip').find('.tip_success').html("√");
+                $('#again_tip').find('.reg_check').val(1);
+            }
+        }
+        function checkPass(node){
+            $('#pass_tip').find('.tip_success').html("");
+            $('#pass_tip').find('.tip_error').html("");
+            var pass = $(node).val();
+            if(pass.length < 6 || pass.length>18){
+                $('#pass_tip').find('.tip_error').html("密码长度为6-18位");
+                return;
+            }
+            var ls = 0;
+            if(pass.match(/([a-z])+/)){
+                ls++;
+            }
+            if(pass.match(/([0-9])+/)){
+                ls++;
+            }
+            if(pass.match(/([A-Z])+/)){
+                ls++;
+            }
+            if(pass.match(/[^a-zA-Z0-9]+/)){
+                ls++;
+            }
+            if(ls<3){
+                $('#pass_tip').find('.tip_error').html("密码需要有数字，大、小写字母组成");
+            }else{
+                // $('#pass_tip').find('.tip_success').html("√");
+                $('#pass_tip').find('.reg_check').val(1);
+            }
+        }
+        function checkUserName(node) {
+            $('#name_tip').find('.tip_success').html("");
+            $('#name_tip').find('.tip_error').html("");
+            $('#name_tip').find('.reg_check').val(0);
+            var regEn = /[`~!@#$%^&*()_+<>?:"{},.\/; '[\]]/im,
+                regCn = /[·！#￥（——）： ；“”‘、，|《。》？、【】[\]]/im;
+            $(node).val($(node).val().replace(regEn,''));//禁止特殊字符
+            $(node).val($(node).val().replace(regCn,''));//禁止特殊字符
+            var val = $(node).val();
+            if(val.length<8 || val.length>18){
+                $('#name_tip').find('.tip_error').html("用户名长度为8到18位");
+                return;
+            }
+            var data={"userName":val};
+            $.ajax({
+                type:'POST',
+                url:'/checkUserName',
+                data:JSON.stringify(data),
+                dataType:"json",
+                contentType: "application/json;charset=utf-8",
+                success:function (data) {
+                    var status = parseInt(data.sts);
+                    if(status==1){
+                        // $('#name_tip').find('.tip_success').html("√");
+                        $('#name_tip').find('.reg_check').val(1);
+                    }else{
+                        $('#name_tip').find('.tip_error').html(data.msg);
+                    }
+                },
+                error:function (jqXHR, textStatus, errorThrown) {
+
+                }
+            });
+        }
+    </script>
+</div>
+<div id="login" class="modal fade"  th:fragment="login">
+    <!--<link rel="stylesheet" th:href="@{/css/bootstrap.css}">-->
+    <!--<script th:src="@{/js/bootstrap.js}"></script>-->
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-body">
+                <button class="close" data-dismiss="modal">
+                    <span>&times;</span>
+                </button>
+            </div>
+            <div class="modal-title">
+                <h1 class="text-center">登录</h1>
+            </div>
+            <div class="modal-body">
+                <form class="form-group" action="">
+                    <div class="form-group">
+                        <label for="">用户名</label>
+                        <input class="form-control" type="text" placeholder="" id="username">
+                    </div>
+                    <div class="form-group">
+                        <label for="">密码</label>
+                        <input class="form-control" type="password" placeholder="" id="password">
+                    </div>
+                    <div class="text-right">
+                        <button class="btn btn-primary" onclick="return doLogin();">登录</button>
+                        <button class="btn btn-danger" data-dismiss="modal">取消</button>
+                    </div>
+                    <a href="" data-toggle="modal" data-dismiss="modal" data-target="#register">还没有账号？点我注册</a>
+                </form>
+            </div>
+        </div>
+    </div>
+    <script>
+        function doLogin() {
+            var data = {"userName":$('#username').val(),"password":$('#password').val()};
+            console.log(data);
+            var uuu = window.location.pathname;
+            if(uuu.indexOf("/login")<0)
+                uuu = "/login"+uuu;
+            $.ajax(
+                {
+                    type:'POST',
+                    url:uuu,
+                    data:JSON.stringify(data),
+                    dataType:"json",
+                    contentType: "application/json; charset=utf-8",
+                    success:function (data) {
+                        var status = parseInt(data.sts);
+                        if(status==1){
+                            $('.alert').html(data.msg).addClass('alert-success').show().delay(1500).fadeOut();
+                            window.location.href=uuu.split("/login")[1];
+
+                        }else{
+                            toastr.error('用户名或密码错误');
+                            console.log("用户名或密码错误");
+                        }
+                    },
+                    error:function (jqXHR, textStatus, errorThrown) {
+                        showPopover($("#login"),"登录失败");
+                        console.log("登录失败");
+                    }
+                }
+            );
+            return false;
+        }
+    </script>
+</div>
+<!--<footer th:replace="/fragment/footer::footer"></footer>-->
+</body>
+</html>

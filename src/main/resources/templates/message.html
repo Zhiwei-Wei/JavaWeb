@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="zh-CN" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>个人信息</title>
+    <link type="text/css" rel="stylesheet" th:href="@{/css/bootstrap.css}">
+    <link type="text/css" rel="stylesheet" th:href="@{/css/layout.css}">
+</head>
+<body>
+<header th:replace="/fragment/header::header"></header>
+<div class="main">
+    <div class='container'>
+        <div class="row">
+            <div class="col-xs-3">
+                <ul class="nav nav-pills nav-stacked" role="tablist">
+                    <li class="active" role="presentation">
+                        <!--用户对用户-->
+                        <a href="#replies" data-toggle="tab" th:text="${session.role==1?'回复我的':'学生回复'}"></a>
+                    </li>
+                    <li th:if="${session.role==2}" role="presentation">
+                        <!--在对应板块向老师提问的-->
+                        <a href="#questions" data-toggle="tab" onclick="getStudentItems()">学生提问</a></li>
+                    <li role="presentation">
+                        <a href="#answers" data-toggle="tab" onclick="getTeacherItems()">教师回复</a>
+                    </li>
+                </ul>
+            </div>
+            <div class="col-md-9">
+                <div id="msg_content" class="tab-content">
+                    <div class="tab-pane fade in active" id="replies">
+                        <ul id="msg_list">
+                        </ul>
+                    </div>
+                    <div class="tab-pane fade" th:if="${session.role==2}" id="questions">
+                        <!--当登录为老师的时候-->
+                        <ul id="ques_list">
+
+                        </ul>
+                    </div>
+                    <div class="tab-pane fade" id="answers">
+                        <!--当登录为学生的时候-->
+                        <ul id="answ_list">
+
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<footer th:replace="/fragment/footer::footer"></footer>
+</body>
+<script>
+    var msgIdx = 0;
+    var teacherIdx = 0;
+    var studentIdx = 0;
+    var loadSize = 10;
+    var full = 0;
+    var stuf = 0;
+    var teaf = 0;
+    function getMsgItems(){
+        if(full==1)
+            return false;
+        $.ajax({
+           type:'GET',
+           url: window.location.pathname+"/getItems?start="+msgIdx+"&size="+loadSize,
+           success:function (data) {
+               console.log("当前加载的项目数："+msgIdx);
+               data = JSON.parse(data);
+               var list = data.list;
+               list = JSON.parse(list);
+               var len = list.length;
+               msgIdx += len;
+               console.log("这一次获得的信息数："+len);
+               if(len==0){
+                   console.log("没有更多新信息了！");
+                   toastr.warning("没有更多信息了！");
+                   full = 1;
+               }
+               var ul = $('#msg_list');
+               for(var i = 0; i < len; i++){
+                   var item = $(list).get(i);
+                   var html = "";
+                   html += '               <li class="msg_item row">\n';
+                   html += '                       <div class="msg_box">\n';
+                   html += '                       <div class="msg_top">\n';
+                   html += '                       <div class="msg_tlf col-lg-1">\n';
+                   html += '                       <a href="#" class="thumbnail">\n' +
+                       '            <img src="/images/icon.jpg"\n' +
+                       '                 alt="通用的占位符缩略图">\n' +
+                       '        </a>';
+                   html += '                       </div>\n';
+                   html += '                       <div class="msg_trt col-lg-8">\n';
+                   html += '                       <div class="resp_info">\n';
+                   html += '                       <span class="resp_name">'+item.relyer+'</span>\n';
+                   html += '                   <span class="resp_date">'+item.date+'</span>\n';
+                   html += '                       </div>\n';
+                   html += '                       <div class="resp_box">\n';
+                   // 只能到问题，不能到具体哪一楼
+                   html += '                       <a href="/course/'+item.takenId+'/question/'+item.questionId+'#qa'+(item.answerId-1)+'"><span class="resp_content">'+item.content+'</span></a>\n';
+                   html += '                   </div>\n';
+                   html += '                   </div>\n';
+                   html += '                   </div>\n';
+                   // html += '                   <div class="msg_bottom">\n';
+                   // html += '                       <span class="msg_content">'+item.myContent+'</span>\n';
+                   // html += '                       </div>\n';
+                   // html += '                       </div>\n';
+                   html += '                       </li>\n';
+                   var $li = $(html);
+                   $(ul).append($li);
+               }
+           }
+        });
+    }
+    function getTeacherItems(){
+        if(teaf==1)
+            return false;
+        //路径中带有student的，都会被检查身份，同理teacher
+        $.ajax({
+            type:'GET',
+            url: window.location.pathname+"/stu/getItems?start="+teacherIdx+"&size="+loadSize,
+            success:function (data) {
+                console.log("当前加载的项目数："+teacherIdx);
+                data = JSON.parse(data);
+                var list = data.list;
+                list = JSON.parse(list);
+                var len = list.length;
+                teacherIdx += len;
+                console.log("这一次获得的信息数："+len);
+                if(len==0){
+                    console.log("没有更多新信息了！");
+                    toastr.warning("没有更多信息了！");
+                    teaf = 1;
+                }
+                var ul = $('#answ_list');
+                for(var i = 0; i < len; i++){
+                    var item = $(list).get(i);
+                    var html = "";
+                    html += '               <li class="msg_item row">\n';
+                    html += '                       <div class="msg_box">\n';
+                    html += '                       <div class="msg_top">\n';
+                    html += '                       <div class="msg_tlf col-lg-1">\n';
+                    html += '                       <a href="#" class="thumbnail">\n' +
+                        '            <img src="/images/icon.jpg"\n' +
+                        '                 alt="通用的占位符缩略图">\n' +
+                        '        </a>';
+                    html += '                       </div>\n';
+                    html += '                       <div class="msg_trt  col-lg-8">\n';
+                    html += '                       <div class="resp_info">\n';
+                    html += '                       <span class="resp_name">'+item.relyer+'</span>\n';
+                    html += '                   <span class="resp_date">'+item.date+'</span>\n';
+                    html += '                       </div>\n';
+                    html += '                       <div class="resp_box">\n';
+                    // 只能到问题，不能到具体哪一楼
+                    html += '                       <a href="/course/'+item.takenId+'/question/'+item.questionId+'#qa'+(item.answerId-1)+'"><span class="resp_content">'+item.content+'</span></a>\n';
+                    html += '                   </div>\n';
+                    html += '                   </div>\n';
+                    html += '                   </div>\n';
+                    // html += '                   <div class="msg_bottom">\n';
+                    // html += '                       <span class="msg_content">'+item.myContent+'</span>\n';
+                    // html += '                       </div>\n';
+                    html += '                       </div>\n';
+                    html += '                       </li>\n';
+                    var $li = $(html);
+                    $(ul).append($li);
+                }
+            }
+        });
+    }
+    function getStudentItems(){
+        if(stuf==1)
+            return false;
+        //路径中带有student的，都会被检查身份，同理teacher
+        $.ajax({
+            type:'GET',
+            url: window.location.pathname+"/teacher/getItems?start="+studentIdx+"&size="+loadSize,
+            success:function (data) {
+                console.log("当前加载的项目数："+teacherIdx);
+                data = JSON.parse(data);
+                var list = data.list;
+                list = JSON.parse(list);
+                var len = list.length;
+                studentIdx += len;
+                console.log("这一次获得的信息数："+len);
+                if(len==0){
+                    console.log("没有更多新信息了！");
+                    toastr.warning("没有更多信息了！");
+                    stuf = 1;
+                }
+                var ul = $('#ques_list');
+                for(var i = 0; i < len; i++){
+                    var item = $(list).get(i);
+                    var html = "";
+                    html += '               <li class="msg_item row">\n';
+                    html += '                       <div class="msg_box">\n';
+                    html += '                       <div class="msg_top">\n';
+                    html += '                       <div class="msg_tlf col-lg-1">\n';
+                    html += '                       <a href="#" class="thumbnail">\n' +
+                        '            <img src="/images/icon.jpg"\n' +
+                        '                 alt="通用的占位符缩略图">\n' +
+                        '        </a>';
+                    html += '                       </div>\n';
+                    html += '                       <div class="msg_trt col-lg-8">\n';
+                    html += '                       <div class="resp_info">\n';
+                    html += '                       <span class="resp_name">'+item.relyer+'</span>\n';
+                    html += '                   <span class="resp_date">'+item.date+'</span>\n';
+                    html += '                       </div>\n';
+                    html += '                       <div class="resp_box">\n';
+                    // 只能到问题，不能到具体哪一楼
+                    html += '                       <a href="/course/'+item.takenId+'/question/'+item.questionId+'#qa'+(item.answerId-1)+'"><span class="resp_content">'+item.content+'</span></a>\n';
+                    html += '                   </div>\n';
+                    html += '                   </div>\n';
+                    html += '                   </div>\n';
+                    // html += '                   <div class="msg_bottom">\n';
+                    // html += '                       <span class="msg_content"></span>\n';
+                    // html += '                       </div>\n';
+                    html += '                       </div>\n';
+                    html += '                       </li>\n';
+                    var $li = $(html);
+                    $(ul).append($li);
+                }
+            }
+        });
+    }
+    $(window).scroll(
+        function() {
+            var scrollTop = $(this).scrollTop();
+            var scrollHeight = $(document).height();
+            var windowHeight = $(this).height();
+            if (scrollTop + windowHeight == scrollHeight){
+                if($('#replies').attr("class").indexOf("active")>=0) {//说明当前页面的是replies
+                    getMsgItems();
+                }else if($('#answers').attr("class")!=undefined&&$('#answers').attr("class").indexOf("active")>=0){
+                    getTeacherItems();
+                }else if($('#questions').attr("class").indexOf("active")>=0){
+                    getStudentItems();
+                }
+            }
+        });
+    addLoadEvent(getMsgItems)
+</script>
+</html>

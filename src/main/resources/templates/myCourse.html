@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="zh-CN" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>我的课程</title>
+    <link type="text/css" rel="stylesheet" th:href="@{/css/layout.css}">
+</head>
+<body>
+<header th:replace="/fragment/header::header"></header>
+<div class='main'>
+
+    <div class="panel-body" style="padding-bottom:0px;">
+        <div class="panel panel-default">
+            <div class="panel-heading">课程列表</div>
+            <div class="panel-body">
+                <form id="formSearch" class="form-horizontal">
+                    <div class="form-group" style="margin-top:15px">
+                        <label class="control-label col-lg-1" for="txt_search_course" style="
+        padding-top:.5em;
+        padding-right:.2em;">选择条件</label>
+                        <div class="col-lg-2">
+                            <select id="txt_search_course"  class="form-control show-tick selectpicker">
+                                <option value="0" selected>不限</option>
+                                <option th:each="course:${courses}" th:value="${course.takenId}"
+                                         th:text="${course.courseName}"></option>
+                            </select>
+                        </div>
+                        <div class="col-lg-1">
+                            <a class="btn btn-default form-control" onclick="goToTaken()">前往</a>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <div id="toolbar" class="btn-group">
+        <a id="btn_view"  class="btn btn-default">
+        <span class="glyphicon glyphicon-eye-open" aria-hidden="true"></span>&nbsp;浏览权限
+        </a>
+        <a id="btn_post" class="btn btn-default">
+        <span class="glyphicon glyphicon-edit" aria-hidden="true"></span>&nbsp;评论权限
+        </a>
+        <a id="btn_delete" class="btn btn-default">
+        <span class="glyphicon glyphicon-heart" aria-hidden="true"></span>&nbsp;摆着好看
+        </a>
+        </div>
+        <table id="tb_students"></table>
+    </div>
+</div>
+<footer th:replace="/fragment/footer::footer"></footer>
+<script>
+    function goToTaken(){
+        //转向选中的课程网站
+        var val = $('#txt_search_course').val();
+        if(val==0)
+            toastr.warning('请先选择对应课程');
+        else{
+            window.location.href="/course/"+val;
+        }
+    }
+    $('#btn_post').click(function () {
+        var takesId = parseInt($('#txt_search_course').val());
+        if(takesId==0){
+            toastr.warning('清先选中课程');
+            return false;
+        }
+        var rows = $('#tb_students').bootstrapTable("getSelections");
+        if(rows.length==0){
+            toastr.warning('清先选中要处理的数据');
+        }else{
+            var ids="";
+            for(var i = 0; i < rows.length; i++){
+                ids += rows[i]['stuId']+" ";
+            }
+            var oper="ban";
+            if($(this).find('span').attr("class").indexOf("edit")>=0){
+                //说明是允许评论
+                oper="allow";
+            }
+            $(this).find('span').toggleClass("glyphicon-edit glyphicon-ban-circle");
+            var data={"takesId":takesId,"ids":ids,"oper":oper};
+            $.ajax({
+                type:'GET',
+                url:'/teacher/authority/post',
+                data:data,
+                dataType:"json",
+                success:function(data){
+                    toastr.success('操作成功！');
+                    $('#tb_students').bootstrapTable('refresh');
+                },
+                error:function(){
+                    toastr.error('未知错误');
+                }
+            });
+        }
+    });
+    $('#btn_view').click(function () {
+        var takesId = parseInt($('#txt_search_course').val());
+        if(takesId==0){
+            toastr.warning('清先选中课程');
+            return false;
+        }
+        var rows = $('#tb_students').bootstrapTable("getSelections");
+        if(rows.length==0){
+            toastr.warning('清先选中要处理的数据');
+        }else{
+            var ids="";
+            for(var i = 0; i < rows.length; i++){
+                ids += rows[i]['stuId']+" ";
+            }
+            var oper="ban";
+            if($(this).find('span').attr("class").indexOf("open")>=0){
+                //说明是允许浏览
+                oper="allow";
+            }
+            $(this).find('span').toggleClass("glyphicon-eye-close glyphicon-eye-open");
+            var data={"takesId":takesId,"ids":ids,"oper":oper};
+            $.ajax({
+                type:'GET',
+                url:'/teacher/authority/view',
+                data:data,
+                dataType:"json",
+                success:function(data){
+                    toastr.success('操作成功！');
+                    $('#tb_students').bootstrapTable('refresh');
+                },
+                error:function(){
+                    toastr.error('未知错误');
+                }
+            });
+        }
+    });
+    $(function () {
+
+        //1.初始化Table
+        var oTable = new TableInit();
+        console.info(oTable);
+        oTable.Init();
+
+        //2.初始化Button的点击事件
+        var oButtonInit = new ButtonInit();
+        oButtonInit.Init();
+    });
+    function query() {
+        $('#tb_students').bootstrapTable('refresh');
+    }
+    var TableInit = function () {
+        var oTableInit = new Object();
+        //初始化Table
+        oTableInit.Init = function () {
+            $('#tb_students').bootstrapTable({
+                url: '/teacher/getStudents',         //请求后台的URL（*）
+                method: 'get',                      //请求方式（*）
+                toolbar: '#toolbar',                //工具按钮用哪个容器
+                striped: true,                      //是否显示行间隔色
+                cache: false,                       //是否使用缓存，默认为true，所以一般情况下需要设置一下这个属性（*）
+                pagination: true,                   //是否显示分页（*）
+                sortable: false,                     //是否启用排序
+                sortOrder: "asc",                   //排序方式
+                queryParams: oTableInit.queryParams,//传递参数（*）
+                sidePagination: "server",           //分页方式：client客户端分页，server服务端分页（*）
+                pageNumber:1,                       //初始化加载第一页，默认第一页
+                pageSize: 10,                       //每页的记录行数（*）
+                pageList: [10, 25, 50, 100],        //可供选择的每页的行数（*）
+                search: false,                       //是否显示表格搜索，此搜索是客户端搜索，不会进服务端，所以，个人感觉意义不大
+                strictSearch: true,
+                showColumns: true,                  //是否显示所有的列
+                showRefresh: true,                  //是否显示刷新按钮
+                minimumCountColumns: 2,             //最少允许的列数
+                clickToSelect: true,                //是否启用点击选中行
+                height: 500,                        //行高，如果没有设置height属性，表格自动根据记录条数觉得表格高度
+                uniqueId: "ID",                     //每一行的唯一标识，一般为主键列
+                showToggle:true,                    //是否显示详细视图和列表视图的切换按钮
+                cardView: false,                    //是否显示详细视图
+                detailView: false,                   //是否显示父子表
+                responseHandler: function (data) {
+                    console.log(data);
+                    return data;
+                },
+                columns: [{
+                    checkbox: true
+                }, {
+                    field: 'stuId',
+                    title: '学生编号'
+                }, {
+                    field: 'nickName',
+                    title: '用户昵称'
+                }, {
+                    field: 'realName',
+                    title: '真实姓名'
+                }, {
+                    field: 'school',
+                    title: '所在学校'
+                }, {
+                    field: 'institution',
+                    title: '所在学院'
+                }, {
+                    field: 'view',
+                    title: '浏览'
+                }, {
+                    field: 'post',
+                    title: '评论'
+                }]
+            });
+        };
+        //得到查询的参数
+        oTableInit.queryParams = function (params) {
+            var temp = {   //这里的键的名字和控制器的变量名必须一直，这边改动，控制器也需要改成一样的
+                limit: params.limit,   //页面大小
+                offset: params.offset,  //页码
+                takesId:$('#txt_search_course').val()
+            };
+            return temp;
+        };
+        return oTableInit;
+    };
+    var ButtonInit = function () {
+        var oInit = new Object();
+        var postdata = {};
+
+        oInit.Init = function () {
+            //初始化页面上面的按钮事件
+
+        };
+
+        return oInit;
+    };
+</script>
+</body>
+</html>

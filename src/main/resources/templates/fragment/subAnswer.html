@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="zh-CN" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+    <link type="text/css" rel="stylesheet" th:href="@{/css/layout.css}">
+</head>
+<body>
+<div class='main'>
+    <li class="sub_ans_item row" th:fragment="subAnswer">
+        <div class="sub_author col-lg-2">
+            <input class="from_id" type="hidden">
+            <label class="from_name"></label>
+            <input class="to_id" type="hidden">
+            <label class="to_name"></label>
+            <a class="sb_label label label-info"></a>
+        </div>
+        <div class="sub_content col-lg-10">
+            <span class="sub_content_content"></span>
+            <span class="sub_content_date"></span>
+            <input type="hidden" class="sub_ans_id"><br>
+            <a class="sub_ans_post">回复</a>
+        </div>
+    </li>
+</div>
+</body>
+</html>

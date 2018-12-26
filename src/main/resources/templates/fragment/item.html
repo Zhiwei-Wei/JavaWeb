@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="zh-CN" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+    <link type="text/css" rel="stylesheet" th:href="@{/css/layout.css}">
+</head>
+<body>
+<header th:replace="/fragment/header::header"></header>
+<div class='main'>
+    <li class="item" th:fragment="item">
+        <input class="it_takenId" type="hidden">
+        <span class="it_course"><input type="hidden" value="">课程名</span>
+        <span class="it_teacher"><input type="hidden" value="">老师名</span>
+        <span class="it_inst"><input type="hidden" value="">开课学院</span>
+        <span class="it_year">开课年份</span>
+        <span class="it_year">开课季度</span>
+    </li>
+</div>
+<footer th:replace="/fragment/footer::footer"></footer>
+</body>
+<script th:src="@{/js/jquery-3.3.1.min.js}"></script>
+</html>

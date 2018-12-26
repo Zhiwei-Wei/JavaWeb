@@ -1,0 +1,391 @@
+<!DOCTYPE html>
+<html lang="zh-CN" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>问题</title>
+    <link type="text/css" rel="stylesheet" th:href="@{/css/bootstrap.css}">
+    <link type="text/css" rel="stylesheet" th:href="@{/css/layout.css}">
+</head>
+<body>
+<header th:replace="/fragment/header::header"></header>
+<div id="ans_wrapper" style="display: none;">
+    <div class="ans_item" th:replace="/fragment/content::content"></div>
+</div>
+<div id="sub_ans_wrapper" style="display:none;">
+    <div class="sub_ans_item" th:replace="/fragment/subAnswer::subAnswer"></div>
+</div>
+<input type="hidden" th:value="${session.uid}" id="uid">
+<input type="hidden" th:value="${session.curTid}" id="tid">
+<input type="hidden" th:value="${session.role}" id="role">
+<input type="hidden" th:value="${qId}" id="qId">
+<input type="hidden" th:value="${tkId}" id="takesId">
+<div class='main'>
+    <div class="qu_main_wrapper">
+        <a id="toCourse">返回课程</a>
+        <div id="qu_title" class="title"></div>
+        <div id="qu_wrapper"></div>
+        <div id="post_answer">
+            <div th:replace="/fragment/upload::upload"></div>
+            <div id="post_head">发表回复</div>
+            <div id="post_body">
+                <div id="post_text" placeholder="发表回复" contenteditable="true"></div>
+                <div id="post_img_preview"></div>
+            </div>
+            <button class="btn btn-success" onclick="post();">发表</button>
+            <button id="post_img" class="btn btn-info" onclick="addImg();return false;">上传文件</button>
+        </div>
+    </div>
+</div>
+<footer th:replace="/fragment/footer::footer"></footer>
+</body>
+<script th:src="@{/js/zyFile.js}"></script>
+<script th:src="@{/js/zyUpload.js}"></script>
+<script th:src="@{/js/jq22.js}"></script>
+<script>
+
+    function addImg() {
+        $('#upload_img_wrapper').slideDown(300);
+    }
+    function post() {
+        var data={
+            "content":$('#post_text').html()
+        };
+        var path = window.location.pathname;
+        _post(data,path+'/post');
+    }
+    function getAnswers(){
+        var page = parseInt(getUrlParam("page"));
+        if(isNaN(page)){
+            page = 1;
+        }
+        $.ajax({
+            type:'GET',
+            url:window.location.pathname+'/getAnswers?page='+page,
+            dataType:"json",
+            success:function (data) {
+                var json = data;
+                var ans_node = $('#ans_wrapper').find(".ans_item");
+                var sub_ans_node = $('#sub_ans_wrapper').find(".sub_ans_item");
+                var answers = JSON.parse(json.answers);
+                var question = JSON.parse(json.question);
+                if(question==null){
+                    throw "错误访问";
+                }
+                var qu_node = $('#qu_wrapper');
+                $('#qu_wrapper').empty();
+                $('#qu_title').html(question.title);
+                $(document).attr("title",question.title);
+                var q_node = $(ans_node).clone();
+                $(q_node).find('.ans_id').val('0');//question不应该是answer
+                $(q_node).find('.author_id').val(question.userId);
+                $(q_node).find('.author_name').html(question.authorName);
+                if(question.userRole==2){
+                    $(q_node).find('.qu_label').html("教师");
+                }
+                else if(question.userRole==0){
+                    $(q_node).find('.qu_label').html("管理员");
+                }
+                $(q_node).find('.content_content').html(question.content);
+                $(q_node).find('.content_date').html(question.date);
+                $(q_node).find('.sub_answers').remove();//问题是没有子答案的
+                $(q_node).find('.content_order').remove();//问题是不存在楼层的
+                var hh = "";
+                var images = question.imageUrls;
+                if(typeof images != "undefined") {
+                    for (var k = 0; k < images.length; k++) {
+                        var imk = $(images).get(k);
+                        hh += '<a href="' + imk.url + '" download>' + imk.fileName + '</a><br>';
+                    }
+                    $(q_node).find('.file_preview').html(hh);
+                }
+                $(q_node).attr('id',"a0");
+                $(qu_node).append(q_node);
+                for(var i = 0; i < answers.length; i++){
+                    var ans_clone = $(ans_node).clone();
+                    var answer = $(answers).get(i);
+                    $(ans_clone).attr('id','a'+answer.answerId);
+                    $(ans_clone).find('.ans_id').val(answer.answerId);
+                    $(ans_clone).find('.author_id').val(answer.fromId);
+                    $(ans_clone).find('.author_name').html(answer.fromName);
+                    $(ans_clone).find('.content_content').html(answer.content);
+                    $(ans_clone).find('.content_date').html(answer.date);
+                    $(ans_clone).find('.content_order').html(answer.ansOrder+'楼');
+                    $(ans_clone).find('.content_order').val(answer.ansOrder);
+                    if(answer.fromRole==2){
+                        $(ans_clone).find('.qu_label').html("教师");
+                    }
+                    else if(answer.fromRole==0){
+                        $(ans_clone).find('.qu_label').html("管理员");
+                    }
+                    var subans = JSON.parse(answer.jsonSubAnswers);
+                    var ul = $(ans_clone).find('.sub_answer_list');
+                    for(var j = 0; j < subans.length; j++){
+                        var sub_ans_clone = $(sub_ans_node).clone();
+                        var sub_ans = $(subans).get(j);
+                        $(sub_ans_clone).find('.from_id').val(sub_ans.fromId);
+                        $(sub_ans_clone).find('.from_name').html(sub_ans.fromName);
+                        $(sub_ans_clone).find('.sub_content_content').val(sub_ans.content);
+                        $(sub_ans_clone).find('.sub_content_date').html(sub_ans.date);
+                        $(sub_ans_clone).find('.sub_ans_id').val(sub_ans.subAnswerId);
+                        if(sub_ans.fromRole==2){
+                            $(sub_ans_clone).find('.sb_label').html("教师");
+                        }
+                        else if(sub_ans.fromRole==0){
+                            $(sub_ans_clone).find('.sb_label').html("管理员");
+                        }
+                        $(sub_ans_clone).find('.sub_content_content').html(sub_ans.content);
+                        $(sub_ans_clone).find('.sub_ans_post').click(function () {
+                            var val = $(this).parent().find('.sub_ans_id').val();
+                            var sbans = $(this).parent().parent().parent().parent();
+                            $(sbans).find('.to_sub_ans_id').val(val);//保存回复的对象的问题的id
+                            $(sbans).find('.sub_text').empty();
+                            var toName = $(this).parent().parent().find('.from_name').html();
+                            $(sbans).find('.sub_text').focus().html("回复@"+toName+":");
+                        });
+                        $(ul).append(sub_ans_clone);
+                    }
+                    var html = "";
+                    var images = answer.images;
+                    if(typeof images != "undefined"){
+                        for(var ii = 0; ii < images.length; ii++){
+                            var im = $(images).get(ii);
+                            html += '<a href="'+im.url+'" download="'+im.fileName+'">'+im.fileName+'</a><br>';
+                        }
+                        $(ans_clone).find('.file_preview').html(html);
+                    }
+                    $(qu_node).append(ans_clone);
+                }
+                sub_text();
+                alterAuthority();
+                var t = $('#qu_title').offset().top;
+                $("html,body").animate({scrollTop:t-"90"+"px"}, 500);
+            },
+            error:function (jqXHR, textStatus, errorThrown) {
+                toastr.error("网络错误!");
+            }
+        });
+    }
+    function sub_text() {
+        var qu = $('#qu_wrapper');
+        var as = $(qu).find('.sub_show_num');
+        var len = as.length;
+        console.log('as的len:'+len);
+        var ss = $(as).get(0);
+        $(ss).html("回复");
+        $(ss).click(function () {
+            $('body,html').animate({scrollTop:$("#post_answer").offset().top},1000);
+            $('#post_text').focus();//获得焦点
+        });
+        for(var i = 1; i < len; i++){
+            var a = $(as).get(i);
+            var div = $(a).parent().next();
+            $(div).hide();
+            var item_num = $(div).find('.sub_ans_item').length;
+            var text = "回复";
+            if(item_num>0){
+                text = text + "("+item_num+")";
+            }
+            $(a).html(text);
+            $(a).click(
+                function () {
+                    var div = $(this).parent().next();
+                    if($(this).html().indexOf("收起回复")<0){
+                        $(this).html("收起回复");
+                        $(div).slideDown(300);
+                    }else{
+                        var item_num = $(div).find('.sub_ans_item').length;
+                        var text = "回复";
+                        if(item_num>0){
+                            text = text + "("+item_num+")";
+                        }
+                        $(this).html(text);
+                        $(div).slideUp(300);
+                    }
+                }
+            );
+            var sub_post = $(a).parent().next().find('.sub_post');
+            $(sub_post).click(
+                function () {
+                    var sub_text = $(this).parent().find('.sub_text').html();
+                    var toSubAnsId=$(this).parent().find('.to_sub_ans_id').val();
+                    console.log(sub_text);
+                    $.ajax({
+                        type:'GET',
+                        url:window.location.pathname+'/postSubAnswer?contentOrder='+
+                            $(this).parent().parent().parent().find('.ans_id').val()+'&content='+sub_text
+                        +'&subAnsId='+toSubAnsId,
+                        success:function (data) {
+                            //发送成功
+                            toastr.success("发送成功！");
+                            setTimeout(function(){
+                                window.location.reload();
+                            },1350);
+                        },
+                        error:function (jqXHR, textStatus, errorThrown) {
+                            toastr.error("发送失败!");
+                        }
+                    });
+                }
+            );
+        }
+    }
+    function rel(){
+        var href = window.location.href;
+        setTimeout(function () {
+            if(href.indexOf("#q")>0){
+                var a = parseInt(href.split("#q")[1].substring(1));
+                window.location.href = href.split("#q")[0]+"#a"+(a+1);
+                $('body').animate({scrollTop: $('#a'+(a+1)).offset().top}, 1000);
+                $('#a'+(a+1)+' .content_content').css('font-weight','bold');
+            }
+        },100);
+    }
+    function alterAuthority(){
+        var ansItems = $('#qu_wrapper').find('.ans_item');
+        $.each(ansItems,function () {
+            var authorId = $(this).find('.author_id').val();
+            var answerId = $(this).find('.ans_id').val();
+            if(checkAuthority(authorId)){
+                //添加删除按钮
+                var $bt = $("<button class='btn dropdown  all-camera-dropdown btn-default btn-sm'" +
+                    "><a class=\"glyphicon glyphicon-plus dropdown-toggle\" data-toggle=\"dropdown\" ></a> 操作" +
+                    "<ul class='dropdown-menu'><li data-filter-camera-type=\"all\"><a" +
+                    " class='del_bt btn btn-default' data-toggle=\"tab\"><input type='hidden' class='asId' value='"+answerId+"'>删除</a></li></ul></button>");
+                $($bt).find('.glyphicon').click(function(){
+                    if($(this).attr('class').indexOf("plus")>=0){
+                        $(this).attr('class','dropdown-toggle glyphicon glyphicon-minus');
+                    }
+                    else{
+                        $(this).attr('class','dropdown-toggle glyphicon glyphicon-plus');
+                    }
+                });
+                $($bt).find('.del_bt').click(function () {
+                    delAnswer(this);
+                });
+                if(authorId==$('#uid').val()){
+                    //添加修改按钮
+                    var ul = $($bt).find('.dropdown-menu');
+                    var tli = $('<li data-filter-camera-type="all"><a' +
+                        '                    class=\'chg_bt btn btn-default\' data-toggle="tab">' +
+                        '<input type=\'hidden\' class=\'asId\' value="'+answerId+'">修改</a></li>');
+                    $(tli).find('.chg_bt').click(function () {
+                        var asid = $(this).find('.asId').val();
+                        changeAnswer(asid);
+                    });
+                    $(ul).append(tli);
+                }
+                $(this).find('.sub_show').append($bt);
+            }
+            var subAnsItems = $(this).find('li[class="sub_ans_item row"]');
+            $.each(subAnsItems,function () {
+                var fId = $(this).find('.from_id');//发回复的人的ID
+                var sbId = parseInt($(this).find('.sub_ans_id').val());
+                if(checkAuthority(fId)){
+                   var $bt = $("<button class='btn btn-danger'><input type='hidden' class='sbId' value='" +
+                       sbId+"'>删除</button>");
+                   $bt.click(function(){
+                       delSubAnswer(this);
+                   });
+                   $(this).find('.sub_content').append($bt);
+                }
+            });
+        })
+    }
+    function changeAnswer(answerId) {
+        var div = $('#a'+answerId);
+        var ct = div.find('.content_content');
+        ct.attr('contentEditable',true);
+        $(div).find('.dropdown').attr('style','display:none');
+        $(div).find('.dropdown').attr('id','once');
+        $(div).find('.sub_show').append('<button class="btn btn-success" id="twice">提交修改</button>');
+        $('#twice').click(function () {
+            $('#once').attr('style','display:inline-block');
+            $('#once').attr('id','');
+            postChange(answerId);
+            $(this).attr('id','');
+            $(this).remove();
+        });
+    }
+    function postChange(answerId) {
+        $.ajax({
+           type:'GET',
+           url:'/user/postChange?answerId='+answerId+'&content='+
+               $('#a'+answerId).find('.content_content').html()+'&takesId='+$('#takesId').val(),
+            success:function (data) {
+                toastr.success('修改成功！');
+                setTimeout(function () {
+                    window.location.reload();
+                },1250);
+            },
+            error:function () {
+                toastr.error('权限不足！');
+                setTimeout(function () {
+                    window.location.reload();
+                },1250);
+            }
+        });
+    }
+    function delSubAnswer(node) {
+        var sbId = $(node).find('.sbId').val();
+        $.ajax({
+            type:'GET',
+            url:'/deleteSb?sbId='+sbId,
+            success:function(data){
+                toastr.success("成功删除！");
+                setTimeout(function () {
+                    window.location.reload();
+                },1250);
+            },
+            error:function () {
+                toastr.error("删除失败！");
+                setTimeout(function () {
+                    window.location.reload();
+                },1250);
+            }
+        });
+    }
+    function checkAuthority(authorId) {//传进来的是对应问题的发表人
+        var flag = 0;
+        var aId = parseInt(authorId);
+        var uid = $('#uid').val();
+        var tid = $('#tid').val();//本版块的teacherId
+        var role = $('#role').val();
+        if(parseInt(uid)==parseInt(aId)){
+            flag = 1;
+        }
+        if(parseInt(tid)==parseInt(uid)){
+            flag = 1;
+        }
+        if(parseInt(role)==0)
+            flag = 1;
+        return flag==1;
+    }
+    function delAnswer(node){//传进来的是button本身
+        var aId = parseInt($(node).find('.asId').val());
+        var qId = parseInt($('#qId').val());
+        console.log(qId+" "+aId);
+        $.ajax({
+            type:'GET',
+            url:'/delete?aId='+aId+'&qId='+qId,
+            success:function(data){
+                toastr.success("成功删除！");
+                setTimeout(function () {
+                    if(aId==0)
+                        window.location.href=window.location.href.split("question")[0];
+                    else
+                        window.location.reload();
+                },1250);
+            },
+            error:function () {
+                toastr.error("删除失败！");
+                setTimeout(function () {
+                    window.location.reload();
+                },1250);
+            }
+        });
+    }
+    $('#toCourse').attr('href',window.location.href.split("question")[0]);
+    addLoadEvent(getAnswers);
+    addLoadEvent(rel);
+</script>
+</html>

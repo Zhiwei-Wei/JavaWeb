@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="zh-CN" xmlns:th="http://www.thymeleaf.org">
+<div class='main'>
+    <div class="ans_item row" th:fragment="content">
+        <input class="ans_id" type="hidden">
+        <div class="author col-lg-3">
+            <a href="#" class="thumbnail">
+                <img src="/images/icon.jpg" alt="通用的占位符缩略图">
+            </a>
+            <input class="author_id" type="hidden" >
+            <label class="author_name" ></label><br>
+            <span class="label label-info qu_label" ></span>
+        </div>
+        <div class="main_content col-lg-9">
+            <div class="content_content" ></div>
+            <span class="content_date" ></span>
+            <div class="sub_show">
+                <a href="javascript:void(0);" class="sub_show_num"></a>
+            </div>
+            <div class="sub_answers">
+                <!--这里不能改变顺序-->
+                <ul class="sub_answer_list">
+                </ul>
+                <div class="sub_text" contenteditable="true"></div>
+                <input type="hidden" value="0" class="to_sub_ans_id">
+                <a href="javascript:void(0);" class="sub_post btn btn-info">发送</a>
+            </div>
+            <span class="content_order"></span>
+            <div class="file_preview"></div>
+        </div>
+    </div>
+</div>
+</body>
+<script th:src="@{/js/jquery-3.3.1.min.js}"></script>
+</html>

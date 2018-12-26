@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html lang="zh-CN" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>错误</title>
+    <link type="text/css" rel="stylesheet" th:href="@{/css/layout.css}">
+</head>
+<body>
+<header th:replace="/fragment/header::header"></header>
+<div class="errorPage">
+    <h3>错误！</h3>
+
+    <p>在访问(<span th:text="${path}"></span>)的过程中似乎碰上了些小问题。</p>
+    <p th:text="${'具体信息: ' + message}"></p>
+</div>
+
+<footer th:replace="/fragment/footer::footer"></footer>
+</body>
+</html>

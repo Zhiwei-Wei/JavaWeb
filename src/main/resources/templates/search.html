@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="zh-CN" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>课程搜索</title>
+    <link type="text/css" rel="stylesheet" th:href="@{/css/bootstrap.css}">
+    <link type="text/css" rel="stylesheet" th:href="@{/css/layout.css}">
+</head>
+<body>
+<header th:replace="/fragment/header::header"></header>
+
+<div class="main">
+    <div class="nav_wrapper">
+        <div class="search_nav">
+            <div class="sel_wrapper">
+                <ul id="nav_inst" class="list-group">开课学院</ul>
+            </div>
+            <div class="sel_wrapper">
+                <ul id="nav_year" class="list-group">开课年份</ul>
+            </div>
+            <div class="sel_wrapper">
+                <ul id="nav_sect" class="list-group">开课季度</ul>
+            </div>
+            <div class="sel_wrapper">
+                <ul id="nav_teac" class="list-group">开课教师</ul>
+            </div>
+            <div class="sel_wrapper">
+                <ul id="nav_activate" class="list-group">是否被激活</ul>
+            </div>
+        </div>
+        <hr>
+        <div class="search_wrapper">
+            <ul id="search_item_list">
+
+            </ul>
+        </div>
+    </div>
+</div>
+
+<footer th:replace="/fragment/footer::footer"></footer>
+</body>
+<script>
+    function getSelectors() {
+        $.ajax({
+            type:'GET',
+            url:window.location.pathname+'/getSelectors?'+getURLArgs(),
+            success:function(data){
+                data = JSON.parse(data);
+                var inst = $('#nav_inst');
+                var year = $('#nav_year');
+                var sect = $('#nav_sect');
+                var teac = $('#nav_teac');
+                var acti = $('#nav_activate');
+                $(inst).empty();
+                $(year).empty();
+                $(sect).empty();
+                $(teac).empty();
+                $(acti).empty();
+                var instl = $.parseJSON(data.inst);
+                var yearl = $.parseJSON(data.year);
+                var sectl = $.parseJSON(data.sect);
+                var teacl = $.parseJSON(data.teac);
+                var actil = $.parseJSON(data.acti);
+                var $lip = $("<li class='list-group-item'>不限</li>");
+                if(0==parseInt(getUrlParam("institution")) || isNaN(parseInt(getUrlParam("institution"))))
+                    $lip.addClass("active");
+                $lip.click(function () {
+                    changeURLArg("institution",0);
+                    getSelectors();
+                    getSelectedItems();
+                });
+                inst.append($lip);
+                $lip = $("<li class='list-group-item'>不限</li>");
+                if(0==parseInt(getUrlParam("year")) || isNaN(parseInt(getUrlParam("year"))))
+                    $lip.addClass("active");
+                $lip.click(function () {
+                    changeURLArg("year",0);
+                    getSelectors();
+                    getSelectedItems();
+                });
+                year.append($lip);
+                $lip = $("<li class='list-group-item'>不限</li>");
+                if(0==parseInt(getUrlParam("section")) || isNaN(parseInt(getUrlParam("section"))))
+                    $lip.addClass("active");
+
+                $lip.click(function () {
+                    changeURLArg("section",0);
+                    getSelectors();
+                    getSelectedItems();
+                });
+                sect.append($lip);
+                $lip = $("<li class='list-group-item'>不限</li>");
+                if(0==parseInt(getUrlParam("teacher")) || isNaN(parseInt(getUrlParam("teacher"))))
+                    $lip.addClass("active");
+
+                $lip.click(function () {
+                    changeURLArg("teacher",0);
+                    getSelectors();
+                    getSelectedItems();
+                });
+                teac.append($lip);
+                $lip = $("<li class='list-group-item'>不限</li>");
+                if(3==parseInt(getUrlParam("activated")) || isNaN(parseInt(getUrlParam("activated"))))
+                    $lip.addClass("active");
+                $lip.click(function () {
+                    changeURLArg("activated",3);
+                    getSelectors();
+                    getSelectedItems();
+                });
+                acti.append($lip);
+                for(var i = 0; i < instl.length; i++){
+                    var $li = $("<li class='list-group-item'><input type='hidden' value='"
+                        +$(instl).get(i).id+"'/>"+$(instl).get(i).name+"<span class='badge'>"+$(instl).get(i).number+"</span></li>");
+                    if($(instl).get(i).id==parseInt(getUrlParam("institution")))
+                        $li.addClass("active");
+                    $li.click(function () {
+                        changeURLArg("institution",$(this).find("input").val());
+                        getSelectors();
+                        getSelectedItems();
+                    });
+                    inst.append($li);
+                }
+                for(var i = 0; i < yearl.length; i++){
+                    var $li = $("<li class='list-group-item'><input type='hidden' value='"
+                        +$(yearl).get(i).id+"'/>"+$(yearl).get(i).name+"<span class='badge'>"+$(yearl).get(i).number+"</span></li>");
+                    if($(yearl).get(i).id==parseInt(getUrlParam("year")))
+                        $li.addClass("active");
+                    $li.click(function () {
+                        changeURLArg("year",$(this).find("input").val());
+                        getSelectedItems();
+                        getSelectors();
+                    });
+                    year.append($li);
+                }
+                for(var i = 0; i < sectl.length; i++){
+                    var $li = $("<li class='list-group-item'><input type='hidden' value='"
+                        +$(sectl).get(i).id+"'/>"+$(sectl).get(i).name+"<span class='badge'>"+$(sectl).get(i).number+"</span></li>");
+                    if($(sectl).get(i).id==parseInt(getUrlParam("section")))
+                        $li.addClass("active");
+                    $li.click(function () {
+                        changeURLArg("section",$(this).find("input").val());
+                        getSelectedItems();
+                        getSelectors();
+                    });
+                    sect.append($li);
+                }
+                for(var i = 0; i < teacl.length; i++){
+                    var $li = $("<li class='list-group-item'><input type='hidden' value='"
+                        +$(teacl).get(i).id+"'/>"+$(teacl).get(i).name+"</li>");
+                    if($(teacl).get(i).id==parseInt(getUrlParam("teacher")))
+                        $li.addClass("active");
+                    $li.click(function () {
+                        changeURLArg("teacher",$(this).find("input").val());
+                        getSelectedItems();
+                        getSelectors();
+                    });
+                    teac.append($li);
+                }
+                for(var i = 0; i < actil.length; i++){
+                    var $li = $("<li class='list-group-item'><input type='hidden' value='"
+                        +$(actil).get(i).id+"'/>"+$(actil).get(i).name+"<span class='badge'>"+$(actil).get(i).number+"</span></li>");
+                    if($(actil).get(i).id==parseInt(getUrlParam("activated")))
+                        $li.addClass("active");
+                    $li.click(function () {
+                        changeURLArg("activated",$(this).find("input").val());
+                        getSelectedItems();
+                        getSelectors();
+                    });
+                    acti.append($li);
+                }
+                checkOver(inst);
+                checkOver(teac);
+            }
+        });
+    }
+    function getSelectedItems(){
+        $.ajax({
+            type:'GET',
+            url:window.location.pathname+'/getItems?'+getURLArgs(),
+            success:function(data){
+                data = JSON.parse(data);
+                var dp = JSON.parse(data.items);
+                var len = dp.length;
+                var node = $('#search_item_list');
+                $(node).empty();
+                for(var i = 0; i < len; i++){
+                    var dd = $(dp).get(i);
+                    var html = "";
+                    html += '                <li class="item">\n';
+                    html += '                        <input class="it_takenId" value="'+dd.takenId+'" type="hidden">';
+                    html += '                        <span class="it_course"><input type="hidden" value="'+dd.courseId+'">'+dd.courseName+'</span>\n';
+                    html += '                    <span class="it_teacher"><input type="hidden" value="'+dd.teacherId+'">'+dd.teacherName+'</span>\n';
+                    html += '                        <span class="it_inst"><input type="hidden" value="'+dd.institutionId+'">'+dd.institution+'</span>\n';
+                    html += '                        <span class="it_year">'+dd.year+'年</span>\n';
+                    html += '                        <span class="it_year">'+dd.sectionName+'</span>\n';
+                    html += '                        <span class="it_activated">'+dd.activatedName+'</span>\n';
+                    html += '                        </li>\n';
+                    var $li = $(html);
+                    $li.click(function () {
+                        window.location.href='/course/'+parseInt($(this).find('.it_takenId').val())+'/';
+                    });
+                    $(node).append($li);
+                }
+
+            }
+        });
+    }
+    /**
+     * 没写完
+     * @param node 是ul节点，检测旗下子节点数量是否超过限制
+     * <br>若超过则省略号表示，并显示展开/收起
+     */
+    function checkOver(node){
+        if($(node).height>'3em') {
+            //留做以后来写
+        }
+    }
+    addPopEvent(getSelectors);
+    addPopEvent(getSelectedItems);
+    addLoadEvent(getSelectors);
+    addLoadEvent(getSelectedItems);
+</script>
+</html>
